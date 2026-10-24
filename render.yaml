@@ -1,6 +1,5 @@
 # Render Blueprint Specification for Debug Dynasty
 # Documentation: https://render.com/docs/blueprint-spec
-version: "1"
 services:
   # ---------------------------------------------------------------------------
   # 1. FastAPI Backend Engine
@@ -40,8 +39,7 @@ services:
         source: /*
         destination: /index.html
     envVars:
-      # NOTE: Replace with your actual backend Render URL once deployed
-      # Example: https://debug-dynasty-backend.onrender.com
-      # Leave no trailing slash and do NOT append '/api'
+      # Live backend URL assigned by Render (e.g. https://debug-dynasty-backend.onrender.com)
+      # No trailing slash, do NOT append /api
       - key: VITE_API_BASE_URL
         sync: false
