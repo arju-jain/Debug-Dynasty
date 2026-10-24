@@ -1,0 +1,47 @@
+# Render Blueprint Specification for Debug Dynasty
+# Documentation: https://render.com/docs/blueprint-spec
+version: "1"
+services:
+  # ---------------------------------------------------------------------------
+  # 1. FastAPI Backend Engine
+  # ---------------------------------------------------------------------------
+  - type: web
+    name: debug-dynasty-backend
+    runtime: python
+    branch: main
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    plan: free
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.12
+      - key: AI_PROVIDER
+        value: mock
+      - key: AUTH_SECRET_KEY
+        generateValue: true
+      - key: CORS_ORIGIN_REGEX
+        value: ^https://.*\.onrender\.com$
+
+  # ---------------------------------------------------------------------------
+  # 2. Vite React Frontend (Static Site)
+  # ---------------------------------------------------------------------------
+  - type: web
+    name: debug-dynasty-frontend
+    runtime: static
+    branch: main
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    plan: free
+    autoDeploy: true
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      # NOTE: Replace with your actual backend Render URL once deployed
+      # Example: https://debug-dynasty-backend.onrender.com
+      # Leave no trailing slash and do NOT append '/api'
+      - key: VITE_API_BASE_URL
+        sync: false

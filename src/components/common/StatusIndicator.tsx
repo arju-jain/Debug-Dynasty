@@ -90,7 +90,7 @@ export const StatusIndicator: React.FC = () => {
               </p>
               <p>{errorMessage}</p>
               <p className="mt-1 text-slate-500 font-mono text-[10px]">
-                Start: uvicorn app.main:app --host 127.0.0.1 --port 8000
+                Start: uvicorn main:app --host 0.0.0.0 --port 8000
               </p>
             </div>
           )}

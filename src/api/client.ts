@@ -2,10 +2,9 @@ import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } f
 import { getAnonymousSessionId } from '../utils/trialManager';
 
 // Base URL strictly read from Vite environment variable; defaults to empty string for relative single-URL setup
-export const API_BASE_URL: string = 
-  import.meta.env.VITE_API_BASE_URL !== undefined 
-    ? import.meta.env.VITE_API_BASE_URL 
-    : '';
+// Strips trailing slashes and trailing '/api' to guarantee endpoints like '/api/health' compose cleanly without duplication
+const rawBaseUrl = (import.meta.env.VITE_API_BASE_URL || '').trim();
+export const API_BASE_URL: string = rawBaseUrl.replace(/\/+$/, '').replace(/\/api$/, '');
 
 export class ApiClientError extends Error {
   statusCode: number;

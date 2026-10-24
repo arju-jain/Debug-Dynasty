@@ -48,7 +48,18 @@ import multi_error_engine
 # Directories & Database Setup
 # ---------------------------------------------------------------------------
 BASE_DIR = Path(__file__).resolve().parent
-DB_PATH = BASE_DIR / "debugger.db"
+DB_PATH_ENV = os.environ.get("DB_PATH") or os.environ.get("DATABASE_PATH")
+if DB_PATH_ENV:
+    DB_PATH = Path(DB_PATH_ENV)
+else:
+    DB_PATH = BASE_DIR / "debugger.db"
+
+if not DB_PATH.parent.exists():
+    try:
+        DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+    except Exception as e:
+        print(f"Warning: Could not create directory {DB_PATH.parent}: {e}")
+
 FRONTEND_DIST = BASE_DIR / "dist"
 
 # Secret key for cryptographically signed HMAC auth tokens
@@ -395,10 +406,36 @@ app = FastAPI(
     description="Debug Dynasty — Find the Bug. Fix the Code. Master the Logic."
 )
 
+raw_cors_origins = os.environ.get("ALLOWED_ORIGINS") or os.environ.get("CORS_ORIGINS") or os.environ.get("FRONTEND_URL")
+if raw_cors_origins and raw_cors_origins.strip() != "*":
+    allowed_origins = [orig.strip().rstrip("/") for orig in raw_cors_origins.split(",") if orig.strip()]
+    for local_host in ["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:8000", "http://127.0.0.1:8000", "http://localhost:3000", "http://127.0.0.1:3000"]:
+        if local_host not in allowed_origins:
+            allowed_origins.append(local_host)
+    allow_credentials = True
+    allow_origin_regex = os.environ.get("CORS_ORIGIN_REGEX", r"https://.*\.onrender\.com")
+elif raw_cors_origins and raw_cors_origins.strip() == "*":
+    allowed_origins = ["*"]
+    allow_credentials = False
+    allow_origin_regex = None
+else:
+    # Default: allow local development origins and any onrender.com origin
+    allowed_origins = [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ]
+    allow_credentials = True
+    allow_origin_regex = os.environ.get("CORS_ORIGIN_REGEX", r"https://.*\.onrender\.com")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=allowed_origins,
+    allow_origin_regex=allow_origin_regex,
+    allow_credentials=allow_credentials,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -652,8 +689,35 @@ async def debug_code(payload: DebugRequest):
     except Exception as db_err:
         print(f"Warning: Failed to save history to database: {db_err}")
 
-    # Check AI Provider config (Mock vs Real)
-    is_mock_provider = os.environ.get("AI_PROVIDER", "mock").lower() == "mock"
+    # Check AI Provider configuration (Mock/In-house vs Real External Providers)
+    configured_provider = os.environ.get("AI_PROVIDER", "mock").strip().lower()
+    is_mock_provider = configured_provider in ("mock", "demo", "local", "")
+    
+    # Check for external API keys if a real provider was requested
+    active_provider = "mock"
+    if not is_mock_provider:
+        if configured_provider == "openai":
+            if os.environ.get("OPENAI_API_KEY"):
+                active_provider = "openai"
+            else:
+                print("Warning: AI_PROVIDER='openai' requested but OPENAI_API_KEY is not set. Falling back to built-in multi-error engine.")
+                is_mock_provider = True
+        elif configured_provider == "gemini":
+            if os.environ.get("GEMINI_API_KEY"):
+                active_provider = "gemini"
+            else:
+                print("Warning: AI_PROVIDER='gemini' requested but GEMINI_API_KEY is not set. Falling back to built-in multi-error engine.")
+                is_mock_provider = True
+        elif configured_provider == "anthropic":
+            if os.environ.get("ANTHROPIC_API_KEY"):
+                active_provider = "anthropic"
+            else:
+                print("Warning: AI_PROVIDER='anthropic' requested but ANTHROPIC_API_KEY is not set. Falling back to built-in multi-error engine.")
+                is_mock_provider = True
+        else:
+            print(f"Warning: Unknown AI_PROVIDER '{configured_provider}'. Using built-in multi-error engine.")
+            is_mock_provider = True
+
     demo_tag = "[DEMO SIMULATION] " if is_mock_provider else ""
 
     response = {
@@ -1071,4 +1135,7 @@ async def serve_spa_frontend(full_path: str):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
+    port = int(os.environ.get("PORT", 8000))
+    host = os.environ.get("HOST", "0.0.0.0" if os.environ.get("PORT") else "127.0.0.1")
+    is_prod = bool(os.environ.get("PORT") or os.environ.get("RENDER"))
+    uvicorn.run("main:app", host=host, port=port, reload=not is_prod)
