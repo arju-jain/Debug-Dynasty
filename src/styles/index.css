@@ -1,0 +1,96 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root,
+  .dark {
+    --bg-primary: #020817;
+    --bg-secondary: #06152b;
+    --bg-nav: #031126;
+    --bg-card: #061b35;
+    --bg-panel: #082344;
+    --border-color: #123f70;
+    --border-active: #078bff;
+    --text-primary: #f1f7ff;
+    --text-secondary: #9db6d5;
+    --text-muted: #6f8baf;
+    --accent-blue: #087cff;
+    --accent-strong-blue: #2563eb;
+    --accent-cyan: #22d3ee;
+    --accent-bright-cyan: #00e5ff;
+    --status-success: #00d6b2;
+    --status-warning: #fbbf24;
+    --status-error: #fb5575;
+  }
+
+  body {
+    background-color: #020817;
+    color: #f1f7ff;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #020817;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #123f70;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #087cff;
+}
+
+/* Polished Dark Card & Panel styles */
+.dynasty-card {
+  background-color: #061b35;
+  border: 1px solid #123f70;
+  border-radius: 1rem;
+  box-shadow: 0 4px 20px -2px rgba(2, 8, 23, 0.7);
+  transition: all 0.2s ease-in-out;
+}
+
+.dynasty-card:hover {
+  border-color: #1e5a9c;
+}
+
+.dynasty-panel {
+  background-color: #082344;
+  border: 1px solid #123f70;
+  border-radius: 0.75rem;
+}
+
+.dynasty-btn-primary {
+  background: linear-gradient(135deg, #087cff 0%, #2563eb 100%);
+  color: #ffffff;
+  font-weight: 600;
+  box-shadow: 0 0 15px -3px rgba(8, 124, 255, 0.4);
+  transition: all 0.2s ease;
+}
+
+.dynasty-btn-primary:hover {
+  background: linear-gradient(135deg, #1d8aff 0%, #1d4ed8 100%);
+  box-shadow: 0 0 20px -2px rgba(8, 124, 255, 0.6);
+  transform: translateY(-1px);
+}
+
+.dynasty-btn-secondary {
+  background-color: #061b35;
+  border: 1px solid #123f70;
+  color: #f1f7ff;
+  transition: all 0.2s ease;
+}
+
+.dynasty-btn-secondary:hover {
+  background-color: #082344;
+  border-color: #22d3ee;
+}
